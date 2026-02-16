@@ -1,0 +1,175 @@
+
+You already created a foreign key:
+
+```sql
+user_id INT NOT NULL
+    CONSTRAINT fk_posts_user
+    REFERENCES users (user_id)
+    ON DELETE CASCADE
+```
+
+Now you're asking: **How do you index the foreign key?**
+
+--------------------------------------------------------------------------
+# 🔑 Why You Should Index Foreign Keys
+
+PostgreSQL **does NOT automatically index foreign keys** (only primary keys get auto-indexed).
+
+So without an index on `posts.user_id`, you may get:
+
+### ❌ Problems
+
+* Slow JOINs
+* Slow deletes from parent table
+* Slow cascades (`ON DELETE CASCADE`)
+* Slow filtering like:
+
+  ```sql
+  SELECT * FROM posts WHERE user_id = 5;
+  ```
+
+
+
+--------------------------------------------------------------------------
+
+# ✅ How to Index a Foreign Key
+
+## Option 1 — After table creation (most common)
+
+```sql
+CREATE INDEX idx_posts_user_id ON posts(user_id);
+```
+
+---
+
+## Option 2 — Create index immediately after table creation (best practice)
+
+```sql
+CREATE TABLE posts (
+    post_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id INT NOT NULL
+        CONSTRAINT fk_posts_user
+        REFERENCES users (user_id)
+        ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    body TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_posts_user_id ON posts(user_id);
+```
+
+
+
+--------------------------------------------------------------------------
+# 🧠 Naming Convention (Recommended)
+
+Follow a clear naming pattern:
+
+```
+idx_<table>_<column>
+```
+
+Examples:
+
+* `idx_posts_user_id`
+* `idx_comments_post_id`
+* `idx_orders_customer_id`
+
+This helps when debugging performance later.
+
+
+
+--------------------------------------------------------------------------
+# ⚡ Why Indexing FK Matters (Real Scenario)
+
+Imagine:
+
+```sql
+DELETE FROM users WHERE user_id = 10;
+```
+
+If you have:
+
+```sql
+ON DELETE CASCADE
+```
+
+Postgres must check:
+
+```sql
+SELECT * FROM posts WHERE user_id = 10;
+```
+
+Without index → **full table scan 😬**
+With index → **fast lookup ⚡**
+
+
+
+--------------------------------------------------------------------------
+# 🔍 How to Check If FK Is Indexed
+
+In psql:
+
+```sql
+\d posts
+```
+
+Look under:
+
+```
+Indexes:
+    "idx_posts_user_id" btree (user_id)
+```
+
+
+
+--------------------------------------------------------------------------
+# 🧠 Pro Tips (From Real Projects)
+
+Since you're building backend skills (and planning full-stack), these are important:
+
+### ✅ Always index foreign keys when:
+
+* You JOIN tables
+* You use CASCADE
+* You query by the relationship
+
+---
+
+### ❌ You might skip indexing if:
+
+* Table is tiny (<100 rows)
+* Pure write-heavy logs
+* Rarely queried by FK
+
+
+
+--------------------------------------------------------------------------
+# 🚀 Bonus: Composite Index (Advanced)
+
+If you often query like:
+
+```sql
+SELECT * FROM posts
+WHERE user_id = 5
+ORDER BY created_at DESC;
+```
+
+Better index:
+
+```sql
+CREATE INDEX idx_posts_user_created
+ON posts(user_id, created_at DESC);
+```
+
+This helps pagination performance 🔥
+
+
+
+--------------------------------------------------------------------------
+# 🧠 Rule of Thumb
+
+**Primary key → auto indexed**
+**Foreign key → YOU must index manually**
+

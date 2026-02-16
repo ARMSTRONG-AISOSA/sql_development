@@ -50,7 +50,19 @@
 -- |
 -- ________________________________________________________________________
 -- drop/delete table
--- DROP TABLE users;
+-- DROP TABLE users;-- |
+-- |
+-- |
+-- |
+-- |
+-- |
+-- ________________________________________________________________________
+-- Delete a Specific row from a table in PostgreSQL
+-- ```sql
+DELETE FROM users
+WHERE
+    user_id = 8;
+
 -- |
 -- |
 -- |
@@ -59,7 +71,12 @@
 -- |
 -- ________________________________________________________________________
 -- insert data into table rows/column
--- DROP TABLE users;
+-- INSERT INTO
+--     users (username, email, firstname, lastname)
+-- VALUES
+-- ('Author234', 'author@gmail.com', 'James', 'Smith'),
+-- ('Lind-quil', 'Linda@gmail.com', 'Linda', 'Suzan'),
+-- ('Chevy', 'Kev-chris@gmail.com', 'Kelvinson', 'Christain');
 -- |
 -- |
 -- |
@@ -67,18 +84,211 @@
 -- |
 -- |
 -- ________________________________________________________________________
+-- Update a value
+-- UPDATE users
+-- SET
+--     username = 'Metro-rite'
+-- WHERE
+--     user_id = 5;
+--------------------------------------------
+--------------------------------------------
+-- Update a values
+-- UPDATE users
+-- SET
+--     username = 'newusername',
+--     email = 'newemail',
+--     firstname = 'newfirstname',
+--     lastname = 'newlastname'
+-- WHERE
+--     user_id = '8';
+-- |
+-- |
+-- |
+-- |
+-- |
+-- ________________________________________________________________________
+-- Delete Row/data
+-- DELETE FROM users
+-- WHERE user_id = 7;-- |
+-- |
+-- |
+-- |
+-- |
+-- ________________________________________________________________________
+-- Delete post/posts
+-- DELETE FROM posts
+-- WHERE post_id = 8;
+-- DELETE FROM posts
+-- WHERE post_id IN (10, 11, 12, 13);
+-- |
+-- |
+-- |
+-- |
+-- |
+-- |
+-- ________________________________________________________________________
+-- Table Relationships
+-- CREATE TABLE
+--     posts (
+--         post_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+--         user_id INT NOT NULL
+--             CONSTRAINT fk_posts_user
+--             REFERENCES users (user_id)
+--             ON DELETE CASCADE,
+--         title TEXT NOT NULL,
+--         body TEXT NOT NULL,
+--         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+--     );
+-- CREATE INDEX idx_posts_user_id ON posts(user_id); --Create index
+-- NOTES: foreign key relationship
+-- posts.user_id → users.user_id
+-- Foreign keys enforce: (Data Integrity)
+-- This doesn't allow you cannot create a post for a non-existent user.
+-------------------------------------------------------------------------
+-- Always add foreign keys for:
+-- Users → Posts
+-- Posts → Comments
+-- Orders → Customers
+-- etc.
+-- This prevents orphan data.
+-------------------------------------------------------------------------
+-- Before creating tables, think:
+--  Who owns this data?
+--  What happens when parent is deleted?
+--  Can child exist without parent?
+-------------------------------------------------------------------------
+-- Naming constraint yourself for more readability
+-- CONSTRAINT fk_<childtable>_<parenttable>
+-- fk: foreign key
+-- fk_posts_users
+-- |
+-- |
+-- |
+-- |
+-- |
+-------------------------------------------------------------------------
+-- Index
+-- CREATE INDEX idx_child-table_parent-column ON child-table(parent-column);
+-- idx_<table>_<column>
+-- CREATE INDEX idx_posts_user_id ON posts(user_id);
+-- Without index → full table scan 😬
+-- With index → fast lookup ⚡
+--
+-- ❌ Problems without index
+--      Slow JOINs
+--      Slow deletes from parent table
+--      Slow cascades (ON DELETE CASCADE)
+--      Slow filtering like:
+-- ```sql
+--      SELECT * FROM posts WHERE user_id = 5;
+--- |
+-- |
+-- |
+-- |
+-- |
+-- |
+-- ________________________________________________________________________
+-- #Insert data into a related table
+-- INSERT INTO 
+--     posts(user_id, title, body)
+-- VALUES
+-- (1, 'node as a package manager', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'),
+-- (8, 'what bun js is about', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'),
+-- (2, 'v8 as a js browser engine', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'),
+-- (2, 'frontend 2024 most popular frameworks', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'),
+-- (5, 'developer news', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'),
+-- (1, 'figma trends', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'),
+-- (8, 'text editor ranking 2026', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.');
+-- |
+-- |
+-- |
+-- |
+-- |
+-- |
+-- |
+-- ________________________________________________________________________
+-- #Join data from tables
+-- JOIN: A query operation that combines tables
+-- Asking the database to merge tables temporarily
+--      Runs now
+--      Returns results
+--      Then disappears
+-- #All columns
+-- SELECT
+--     *
+-- FROM
+--     posts
+--     INNER JOIN users ON users.user_id = posts.user_id;
+---------------------------------------------------------------------
+-- #Specific columns
+-- SELECT
+--     users.firstname,
+--     posts.post_id,
+--     posts.title
+-- FROM
+--     posts
+--     INNER JOIN users ON users.user_id = posts.user_id;
+----------------------------------------------------------------------
+-- #Specific columns
+-- SELECT
+--     users.username,
+--     posts.title,
+--     posts.created_at
+-- FROM
+--     posts
+--     INNER JOIN users ON users.user_id = posts.user_id;
+-- Notes:
+-- 💡 Why JOIN Matters (For You)
+--      Since you're building a blog backend, JOIN lets you:
+--      Show post author names
+--      Count posts per user
+--      Show comments + users
+--      Build dashboards
+-- Without JOIN, backend apps are almost useless.
+-- |
+-- |
+-- |
+-- |
+-- |
+-- |
+-- |
+-- ________________________________________________________________________
+-- #View: A saved query (like a virtual table) from a Join operation (table)
+-- CREATE VIEW
+--     users_posts_info AS
+-- SELECT
+--     users.firstname,
+--     posts.title,
+--     posts.created_at
+-- FROM
+--     posts
+--     JOIN users ON users.user_id = posts.user_id;
+-- +++++++++++++++++++++++++++++++++++++++++++++++++++
+-- No need to write the JOIN again. (saved)
+-- SELECT
+--     *
+-- FROM
+--     users_posts_info;
+--
+-- Ps:Simplifying complex queries: ex Instead of 20-line joins:
+-------------------------------------------------------------------------
 -- fetch all data inside a table
-Select * From users;
-
-
+-- Select
+--     *
+-- From
+--     users;
+-- Select
+--     *
+-- From
+--     posts;
 -- |
 -- |
 -- ________________________________________________________________________
 -- check tables
 -- \dt
-
 -- |
 -- |
 -- ________________________________________________________________________
 -- check inside a specific table
 -- \d users
+-- ps: you would also see, indexes, table references, foreign keys and delete conditions/behaviours

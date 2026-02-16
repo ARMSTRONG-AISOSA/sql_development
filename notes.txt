@@ -641,4 +641,4 @@ Simple rule to remember: Everything in Postgres is an object, and every object l
 
 
 
-
+Note: During tbleb relationships, parent table doesn't need to understand that it is being referenced

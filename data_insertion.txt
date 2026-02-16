@@ -1,0 +1,178 @@
+When you insert data into a PostgreSQL table:
+
+> ✅ Data is inserted as a **new row**
+> ❌ Not into columns
+
+---
+
+# 📊 Think of a Table Like Excel
+
+Example table:
+
+| user_id | username | email                                   |
+| ------- | -------- | --------------------------------------- |
+| 1       | ben      | [ben@email.com](mailto:ben@email.com)   |
+| 2       | mike     | [mike@email.com](mailto:mike@email.com) |
+
+* **Columns** = vertical (structure)
+* **Rows** = horizontal (actual records)
+
+---
+
+# 📌 Rule
+
+| Concept | Meaning              |
+| ------- | -------------------- |
+| Columns | Define the structure |
+| Rows    | Store the data       |
+
+So:
+
+> INSERT adds a new row across all columns.
+
+---
+
+# 🧪 Example
+
+### Table:
+
+```sql
+CREATE TABLE users (
+  user_id INT,
+  username TEXT,
+  email TEXT
+);
+```
+
+---
+
+### Insert data:
+
+```sql
+INSERT INTO users (user_id, username, email)
+VALUES (1, 'ben', 'ben@email.com');
+```
+
+### Result:
+
+| user_id | username | email                                 |
+| ------- | -------- | ------------------------------------- |
+| 1       | ben      | [ben@email.com](mailto:ben@email.com) |
+
+👉 One **row** added
+👉 Values mapped into columns
+
+---
+
+# 🧠 How INSERT Works Internally
+
+When you run:
+
+```sql
+INSERT INTO users (...)
+VALUES (...);
+```
+
+PostgreSQL does:
+
+1. Creates a new row slot
+2. Places values into corresponding columns
+3. Saves row to disk
+
+---
+
+# 📌 Important Clarification
+
+### ❓ “Does data go into columns?”
+
+Not directly.
+
+You:
+
+* Target columns
+* But create a row
+
+Think of columns as **labels**, rows as **entries**.
+
+---
+
+# 🧭 Mental Model
+
+Imagine a registration form:
+
+| Field | Value                                 |
+| ----- | ------------------------------------- |
+| Name  | Ben                                   |
+| Email | [ben@email.com](mailto:ben@email.com) |
+
+Each submission = one row.
+
+---
+
+# ⚡ Multiple Inserts
+
+You can insert multiple rows at once:
+
+```sql
+INSERT INTO users (username, email)
+VALUES
+  ('ben', 'ben@email.com'),
+  ('mike', 'mike@email.com');
+```
+
+Adds 2 rows.
+
+---
+
+# 🔍 What if you insert only one column?
+
+```sql
+INSERT INTO users (username)
+VALUES ('john');
+```
+
+Result:
+
+| user_id | username | email |
+| ------- | -------- | ----- |
+| NULL    | john     | NULL  |
+
+Still:
+✅ New row created
+But some columns empty
+
+---
+
+# 🧠 Key Takeaway
+
+> INSERT creates rows.
+> Columns just define where values go.
+
+📌 Mental Model
+Think:
+
+INSERT INTO table (columns)
+VALUES
+(row1),
+(row2),
+(row3);
+
+---
+
+# 🧩 Related Concepts (You’ll learn soon)
+
+* UPDATE → edits existing rows
+* DELETE → removes rows
+* SELECT → reads rows
+* ALTER TABLE → changes columns
+
+---
+
+If you want, I can explain next:
+
+* Rows vs tuples vs records
+* How PostgreSQL stores rows internally
+* Primary keys and row identity
+* Why column order matters in INSERT
+
+You’re asking the right foundational questions 🔥🐘💪
