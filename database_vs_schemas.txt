@@ -1,0 +1,257 @@
+> **A database is a container.
+> A schema is an organizer inside that container.**
+
+---
+
+## Think of it like a real-world setup
+
+### 🗄 Database = the building (The compound)
+### 📁 Schema = folders inside the building (seperate apartments)
+### 📄 Tables / views = files in the folders (rooms in a specific apartment)
+
+```
+Database: armstrong2_db
+└── Schema: public
+    ├── users
+    ├── orders
+    └── products
+└── Schema: auth
+    ├── users
+    └── roles
+└── Schema: reporting
+    └── monthly_sales
+```
+
+Same database.
+Multiple schemas.
+Each schema keeps things **neat and intentional**.
+
+---
+
+## What a **database** really is
+
+A **database**:
+* Is the **top-level container**
+* Holds:
+  * schemas
+  * tables
+  * roles
+  * extensions
+
+* Has its own:
+  * connections
+  * permissions
+  * encoding & locale
+
+Key rules:
+* You **connect to one database at a time**
+* You **cannot query across databases** directly
+
+
+Example:
+```bash
+psql -d armstrong2_db
+```
+
+You’re now locked into that database.
+---
+
+## What a **schema** really is
+
+A **schema**:
+* Lives **inside a database**
+* Organizes database objects
+* Prevents name clashes
+
+Example:
+```sql
+public.users
+auth.users
+```
+
+Both tables can exist **at the same time** because:
+* Same database
+* Different schemas
+
+---
+
+## Why schemas exist (the real reasons)
+
+### 1. Organization (clean architecture)
+
+Instead of dumping everything into `public`:
+```text
+    public.users
+    public.orders
+    public.payments
+```
+
+You do:
+```text
+    auth.users
+    sales.orders
+    billing.payments
+```
+
+Your brain says “thank you”.
+---
+
+
+### 2. Namespacing (same names, no conflict)
+
+```sql
+auth.users
+admin.users
+```
+
+Perfectly legal. Very powerful.
+---
+
+### 3. Security & access control
+
+You can say:
+* App can read `public`
+* Admin can access `admin`
+* Reporting tools can access `reporting`
+
+Without creating separate databases.
+---
+
+### 4. Cleaner migrations & deployments
+
+You can:
+* Drop a schema
+* Reset a feature
+* Version part of your system
+
+Without nuking the whole database.
+---
+
+## The `public` schema (special case)
+
+Postgres creates this automatically:
+
+```text
+public
+```
+
+By default:
+* All tables go here
+* Everyone has access (unless locked down)
+
+That’s why your table appeared as:
+```text
+public | users
+```
+
+---
+
+## How Postgres knows which schema to use
+### 🔍 `search_path`
+
+Postgres uses a search path:
+```sql
+SHOW search_path;
+```
+
+Usually:
+```text
+"$user", public
+```
+
+Meaning:
+1. Look in schema named after the user
+2. Then look in `public`
+
+That’s why you can write:
+
+```sql
+SELECT * FROM users;
+```
+
+Instead of:
+
+```sql
+SELECT * FROM public.users;
+```
+
+---
+
+## When you MUST specify the schema
+
+If two tables share a name:
+```sql
+auth.users
+public.users
+```
+
+You must be explicit:
+```sql
+SELECT * FROM auth.users;
+```
+
+---
+
+## When to use **multiple databases** instead
+
+Use separate databases when:
+* Environments differ (dev / staging / prod)
+* Projects are unrelated
+* You need hard isolation
+
+Example:
+```text
+    app_dev
+    app_test
+    app_prod
+```
+
+Schemas are **not** isolation boundaries — databases are.
+
+---
+
+## Quick comparison table
+
+| Feature      | Database         | Schema                 |
+| ------------ | ---------------- | ---------------------- |
+| Scope        | Top-level        | Inside database        |
+| Connection   | Connect to one   | No separate connection |
+| Isolation    | Strong           | Organizational         |
+| Purpose      | Separate systems | Organize objects       |
+| Cross access | ❌ No            | ✅ Yes                 |
+
+---
+
+## Practical rule of thumb (use this)
+
+* **One app = one database**
+* **Multiple features/modules = multiple schemas**
+
+Example for your kind of work:
+
+```text
+armstrong2_db
+├── auth
+├── public
+├── analytics
+└── admin
+```
+
+---
+
+A clean schema layout for your kind of projects
+
+For a blog / portfolio app:
+
+public      → site content (posts, pages)
+auth        → users, roles
+analytics   → page views, events
+admin       → admin-only tables
+
+
+Quick mental checklist
+-Database = project
+-Schema = module
+-Table = data
+-Always qualify schema when unsure
+-Use schemas to stay sane as your app grows

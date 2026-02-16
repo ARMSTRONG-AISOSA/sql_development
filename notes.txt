@@ -1,0 +1,644 @@
+#Login as Super User
+sudo -i -u postgres
+
+#Login as user armstrong(role)
+psql -h localhost -U armstrong -d armstrong2_db -W
+
+This is you saying:
+“Hey Postgres, I want to connect to a database using psql.”
+
+What each flag means
+Part	           | Meaning
+-------------------|--------------------------------------------------------
+psql	           | PostgreSQL’s command-line client
+-h localhost	   | Connect to the Postgres server running on this machine
+-U armstrong	   | Use the Postgres user named armstrong
+-d armstrong2_db|  |Connect to the database called armstrong2_db
+-W	               | Force password prompt
+
+So in plain English:
+“Connect me to the armstrong2_db database on my local machine as user armstrong, and ask me for the password.”
+
+
+=======================================================================
+What your prompt really tells you
+postgres@armstrong-Latitude-E6540:~$
+
+Before the command:
+postgres → Linux user
+armstrong-Latitude-E6540 → Your machine
+~ → Home directory
+
+After connecting, your prompt should now look like:
+armstrong2_db=>
+
+That means:
+You’re connected to armstrong2_db using user armstrong
+
+
+
+
+=======================================================================
+Create a new user/role
+
+firstname: Open PostgreSQL CLI
+```sql
+    psql
+
+```sql
+      CREATE USER armstrong WITH PASSWORD 'strongpassword';
+
+
+
+=======================================================================
+Create a new database owned by a role/user
+```sql
+      CREATE DATABASE armstrong_db OWNER armstrong;
+
+
+
+
+
+=======================================================================
+Grant privileges (optional but good practice)
+```sql
+      GRANT ALL PRIVILEGES ON DATABASE armstrong_db TO armstrong;
+
+
+
+
+=======================================================================
+List all databases
+```sql
+      \l
+
+
+=======================================================================
+Create Table
+```sql
+      CREATE TABLE
+          users (
+              user_id int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+              username varchar(50) NOT NULL UNIQUE,
+              email varchar(100) NOT NULL UNIQUE
+          );
+
+Check table (after creation)
+
+```sql
+      \dt
+
+```sql
+      \d tablename
+OR
+      \d users
+
+
+
+
+
+=======================================================================
+#Method 1
+Login/Switch User(Role)
+
+#Login as Super User
+```bash
+    sudo -i -u postgres
+
+#Login as user armstrong(role)
+```bash
+    psql -h localhost -U armstrong -d armstrong2_db -W
+
+______________________________________________________________________
+#Method 2
+Method 2 — Switch database AND user (recommended)
+
+Inside psql:
+Format:
+```sql
+      \c database_name username
+
+Example:
+      \c armstrong_db armstrong
+
+
+______________________________________________________________________
+#Method 3 — Switch role without reconnecting
+```sql
+    SET ROLE user;
+
+Important:
+  -Only works if you have permission
+  -Mostly used by admins
+
+PS: \connifo :to confirm
+
+
+
+
+
+=======================================================================
+(Login) Directory Access Rights cd ~/folderpath/
+
+```bash
+sudo -i -u postgres
+
+Now you are the postgres Linux user, not armstrong.
+So Linux asks:
+  Does postgres have permission to enter /home/armstrong/...?
+Right now → ❌ No
+
+Only armstrong($user) can enter
+Other users (including postgres) cannot
+
+_______________________________________________________________________
+Option 1 — BEST (Recommended)
+
+👉 Don’t switch full user
+Just run commands as postgres.
+
+Instead of:
+sudo -i -u postgres
+
+Use:
+sudo -u postgres psql
+
+
+This:
+  Keeps you in your folder (where you opened the terminal)
+  Avoids permission issues
+  Is standard dev workflow
+
+after entering switch user and database
+
+Format:
+```sql
+      \c armstrong_db armstrong
+
+
+To check users and databases
+Format:
+```sql
+      \list
+OR
+      \l
+
+
+To check/confirm
+Format:
+```sql
+      \conninfo
+OR
+```sql
+      SELECT current_user, current_database();
+
+
+
+
+PS: for now ignore the Others method on Directory Access Rights cd ~/folderpath/
+
+
+=======================================================================
+Try these inside psql (quick sanity checks)
+
+\conninfo
+Shows connection details
+`````````````````````````````````````````````
+armstrong2_db=> \conninfo
+You are connected to database "armstrong2_db" as user "armstrong" on host "localhost" (address "127.0.0.1") at port "5432".
+SSL connection (protocol: TLSv1.3, cipher: TLS_AES_256_GCM_SHA384, compression: off)
+
+`````````````````````````````````````````````
+
+Even though you're connecting to localhost, Postgres is still using SSL.
+
+Let’s decode it:
+
+Part	              |  Meaning
+----------------------|----------------------------------------------
+SSL connection	      |  Traffic is encrypted
+TLSv1.3	              |  Latest TLS version (very secure)
+TLS_AES_256_GCM_SHA384|	Strong encryption cipher
+compression: off	  | Compression disabled (security best practice)
+
+👉 This happens when:
+ssl = on in postgresql.conf
+or Postgres auto-negotiates SSL
+
+
+
+=======================================================================
+\dt : 
+List tables
+         List of relations
+ Schema | Name  | Type  |   Owner   
+--------+-------+-------+-----------
+ public | users | table | armstrong
+(1 row)
+
+
+BREAKDOWN
+________________________________________________________________________
+\dt : This is a psql meta-command (not SQL).
+
+It means: “Show me the table in the current database search pathe (that I have access to).”
+\d → describe
+t → tables
+
+________________________________________________________________________
+The output header: List of relations
+In PostgreSQL:
+
+relation = a generic word for database objects
+-tables
+-views
+-indexes
+-sequences
+
+Here, it’s listing table relations.
+
+________________________________________________________________________
+The columns explained
+ Schema | Name  | Type  |   Owner   
+
+
+### 🧱 Schema: public
+
+* Schema is like a **folder** inside the database
+* `public` is the **default schema**
+* Unless specified, tables are created here
+
+So:
+```sql
+SELECT * FROM users;
+```
+
+is really:
+```sql
+SELECT * FROM public.users;
+```
+
+
+
+
+### 📛 Name: users
+
+* This is the **table name**
+* Very common for storing user data (accounts, profiles, auth info, etc.)
+
+
+### 🗂 Type: table
+
+Confirms:
+* This is a **real table**
+* Not a view, materialized view, or foreign table
+
+
+
+### 👤 Owner: armstrong
+
+* The table was created by the Postgres role `armstrong`
+* That role:
+  * Owns the table
+  * Can modify it
+  * Can drop it
+Ownership matters for permissions.
+
+
+
+=======================================================================
+SELECT current_user, current_database();
+ current_user | current_database 
+--------------+------------------
+ armstrong    | armstrong2_db
+
+
+
+=======================================================================
+An important thing
+
+You connected using: -h localhost
+This forces: TCP/IP connection
+
+Which triggers password + SSL
+If you had used: psql -U armstrong -d armstrong2_db
+
+Postgres might have: Used a Unix socket
+Skipped password (peer auth)
+
+
+
+
+
+
+=======================================================================
+### View table structure
+
+```sql
+\d users
+```
+
+______________________________________________________________
+### See the columns + data types
+
+```sql
+\d+ users
+```
+
+______________________________________________________________
+### Check what’s inside
+
+```sql
+SELECT * FROM users;
+```
+
+______________________________________________________________
+### Count records
+
+```sql
+SELECT COUNT(*) FROM users;
+```
+
+______________________________________________________________
+### Mental model (important)
+
+Think of it like this:
+```
+Database: armstrong2_db
+└── Schema: public
+    └── Table: users
+└── Schema: auth
+    └── Schema: users
+```
+
+Right now:
+* One database: armstrong2_db
+* One schema: public
+* One table: users
+* Owned by you
+
+
+
+=======================================================================
+Create a new schema (basic)
+```sql
+CREATE SCHEMA auth;
+
+Verify:
+```sql
+\dn
+
+Output:
+```text
+ List of schemas
+  Name  |       Owner       
+--------+-------------------
+ admin  | armstrong
+ auth   | armstrong
+ public | pg_database_owner
+
+
+
+=======================================================================
+ Create a schema with a specific owner
+```sql
+    CREATE SCHEMA analytics AUTHORIZATION armstrong;
+
+
+
+=======================================================================
+Create a table inside a schema
+Option A: Explicit (recommended while learning)
+
+CREATE TABLE auth.users (
+  id SERIAL PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+
+Check schema (table):
+\dt auth.*
+
+List of relations
+ Schema | Name  | Type  |   Owner   
+--------+-------+-------+-----------
+ auth   | users | table | armstrong
+(1 row)
+
+
+\dt public.*
+
+##switch schemas 
+SET search_path TO auth, public;
+"\dt" in place of "\dt auth.*
+
+
+=======================================================================
+Use tables from different schemas
+
+```sql
+SELECT * FROM auth.users;
+ id | email | password_hash | created_at 
+----+-------+---------------+------------
+(0 rows)
+
+```sql
+SELECT * FROM public.users;
+ user_id | username | email | firstname | lastname 
+---------+----------+-------+-----------+----------
+(0 rows)
+
+
+
+
+
+=======================================================================
+Give permissions (very important later)
+
+Example: allow an app role to read auth schema
+```sql
+GRANT USAGE ON SCHEMA auth TO app_user;
+GRANT SELECT ON ALL TABLES IN SCHEMA auth TO app_user;
+
+
+
+
+=======================================================================
+Drop a schema (careful ⚠️)
+```sql
+  DROP SCHEMA analytics;
+
+If it has tables:
+```sql
+  DROP SCHEMA analytics CASCADE;
+
+CASCADE deletes everything inside.
+
+
+=======================================================================
+Drop an entire database
+```sql
+  DROP DATABASE db_name;
+
+ps: You CANNOT be connected to the DB you’re deleting
+
+Step 1 — Switch to another DB
+```bash
+      psql -U postgres -d postgres
+OR
+```bash
+      psql
+OR
+```sql
+      \c postgres
+
+
+
+Step 2 — Drop the database
+```sql
+      DROP DATABASE armstrong_db;
+
+
+
+________________________________________________________________________
+________________________________________________________________________
+🚫 If database is "being accessed by other users"
+
+You might see:
+ERROR: database is being accessed by other users
+
+
+This happens if:
+    -pgAdmin is open
+    -Another terminal is connected
+    -Your app is running
+
+🔥 Force Drop Database (PostgreSQL 13+)
+DROP DATABASE armstrong_db WITH (FORCE);
+
+
+This:
+  -Kills active connections
+  -Deletes the DB
+
+
+=======================================================================
+What “objects” mean in PostgreSQL
+
+In PostgreSQL, an object is anything the database can store, manage, or control.
+If Postgres can:
+  -create it
+  -name it
+  -secure it
+  -drop it
+…it’s a database object.
+
+
+Big picture (hierarchy)
+PostgreSQL Server
+└── Database
+    ├── Schema
+    │   ├── Table
+    │   ├── View
+    │   ├── Index
+    │   ├── Sequence
+    │   ├── Function
+    │   └── Trigger
+    ├── Role
+    ├── Extension
+    └── Type
+
+Objects live at different levels.
+
+
+Most common PostgreSQL objects (the ones you’ll actually use)
+
+1. Tables: Store data in rows and columns.
+📍 Lives in a schema
+
+2. Schemas: Organize objects and provide namespaces.
+📍 Lives in a database
+
+3. Views: Saved queries that act like tables.
+📍 Lives in a schema
+
+4. Indexes: Speed up queries.
+📍 Attached to a table
+
+5. Sequences: Generate numbers (used for IDs).
+📍 Lives in a schema
+
+6. Functions: Reusable logic inside the database.
+📍 Lives in a schema
+
+7. Triggers: Run automatically on table events.
+📍 Attached to a table
+
+8. Roles (users & groups): Who can access what.
+📍 Lives at the database cluster level
+
+9. Extensions: Add extra functionality.
+📍 Lives in a database
+
+10. Types: Custom data types.
+📍 Lives in a schema
+
+
+
+
+Objects you’ll meet later
+Object	           | What it does
+-------------------------------------------
+Materialized View	 | Cached view result
+Foreign Table	     | Table from another DB
+Domain	           | Constrained data type
+Operator	         | Custom operators
+Policy	           | Row-level security rules
+
+
+
+
+
+
+=======================================================================
+Ownership & permissions (important)
+
+Every object has:
+  -Owner
+  -Privileges
+
+Example:
+```sql
+    ALTER TABLE users OWNER TO armstrong;
+    GRANT SELECT ON users TO app_user;
+
+
+Postgres controls:
+  -Who can see an object
+  -Who can modify it
+  -Who can drop it
+
+How to inspect objects (psql cheatsheet)
+```sql
+\dt        -- tables
+\dn        -- schemas
+\dv        -- views
+\di        -- indexes
+\df        -- functions
+\du        -- roles
+\dx        -- extensions
+
+
+When you understand objects, you understand:
+  -Why schemas matter
+  -Why permissions behave the way they do
+  -Why Postgres feels “strict but powerful”
+Postgres isn’t just storing data — it’s managing objects with rules.
+
+Simple rule to remember: Everything in Postgres is an object, and every object lives somewhere and belongs to someone.
+
+
+
+

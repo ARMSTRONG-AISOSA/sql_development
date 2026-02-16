@@ -1,0 +1,84 @@
+-- Database forum
+-- Design a full forum schema (users, posts, comments)
+-- #1
+-- CREATE TABLE
+--     users (
+--         user_id int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+--         username varchar(50) NOT NULL UNIQUE,
+--         email varchar(100) NOT NULL UNIQUE
+--     );
+-- You are connected to database "forum_db" as user "armstrong" on host "localhost" (address "127.0.0.1") at port "5432".
+-- ________________________________________________________________________
+-- #2
+-- CREATE TABLE
+--     users (
+--         user_id int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+--         username TEXT NOT NULL UNIQUE,
+--         email TEXT NOT NULL
+--     );
+-- To run; be in the same folder; Terminal: "\i filename.sql"
+-- |
+-- |
+-- |
+-- |
+-- |
+-- |
+-- ________________________________________________________________________
+-- #2.2
+-- CREATE TABLE
+--     IF NOT EXISTS users (
+--         user_id int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+--         username TEXT NOT NULL UNIQUE,
+--         email TEXT NOT NULL
+--     );
+-- |
+-- |
+-- |
+-- |
+-- |
+-- |
+-- ________________________________________________________________________
+-- add column to table
+-- ALTER TABLE users
+-- ADD COLUMN firstname TEXT NOT NULL,
+-- ADD COLUMN lastname TEXT NOT NULL;
+-- |
+-- |
+-- |
+-- |
+-- |
+-- |
+-- ________________________________________________________________________
+-- drop/delete table
+-- DROP TABLE users;
+-- |
+-- |
+-- |
+-- |
+-- |
+-- |
+-- ________________________________________________________________________
+-- insert data into table rows/column
+-- DROP TABLE users;
+-- |
+-- |
+-- |
+-- |
+-- |
+-- |
+-- ________________________________________________________________________
+-- fetch all data inside a table
+Select * From users;
+
+
+-- |
+-- |
+-- ________________________________________________________________________
+-- check tables
+-- \dt
+
+-- |
+-- |
+-- ________________________________________________________________________
+-- check inside a specific table
+-- \d users
