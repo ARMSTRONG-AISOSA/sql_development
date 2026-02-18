@@ -1,0 +1,331 @@
+# 🧠 What Are PostgreSQL Data Types?
+
+A **data type defines what kind of value a column can store**.
+
+Example:
+```sql
+    age INTEGER
+    name TEXT
+    created_at TIMESTAMP
+```
+Each column must have a type.
+---
+
+
+# 📦 Main Categories of PostgreSQL Data Types
+Postgres has many types, but they fall into these core groups:
+1️⃣ Numeric
+2️⃣ Text/String
+3️⃣ Boolean
+4️⃣ Date & Time
+5️⃣ UUID
+6️⃣ JSON
+7️⃣ Arrays
+8️⃣ Binary
+9️⃣ Special types
+
+Let’s go through each 👇
+---------------------------------------------------------------
+
+# 🔢 1. Numeric Types (Numbers)
+
+## Integers
+| Type          | Size    | Range      |
+| ------------- | ------- | ---------- |
+| SMALLINT      | 2 bytes | up to ~32k |
+| INTEGER / INT | 4 bytes | ~2 billion |
+| BIGINT        | 8 bytes | very large |
+
+### Example
+```sql
+    age INTEGER
+    likes BIGINT
+```
+👉 Most apps use `INTEGER` by default.
+---
+
+## Decimal Numbers
+| Type              | Use                     |
+| ----------------- | ----------------------- |
+| NUMERIC / DECIMAL | Exact precision (money) |
+| REAL              | Float (less precise)    |
+| DOUBLE PRECISION  | Larger float            |
+
+### Example
+```sql
+    price NUMERIC(10,2)
+    rating DOUBLE PRECISION
+```
+💡 Use NUMERIC for money.
+
+
+---------------------------------------------------------------
+# 🔤 2. Text / String Types
+
+## Most Important for you
+| Type       | Notes                          |
+| ---------- | ------------------------------ |
+| TEXT       | Unlimited length (recommended) |
+| VARCHAR(n) | Length-limited string          |
+| VARCHAR    | Same as TEXT (no limit)        |
+| CHAR(n)    | Fixed-length (rarely used)     |
+
+### Example
+```sql
+    username TEXT
+    email TEXT
+```
+👉 Use TEXT by default (Postgres best practice).
+
+
+---------------------------------------------------------------
+# ✅ 3. Boolean
+
+Stores true/false.
+```sql
+    is_admin BOOLEAN
+    published BOOLEAN
+```
+
+Values allowed:
+```
+    TRUE / FALSE
+    t / f
+    1 / 0
+```
+
+
+---------------------------------------------------------------
+# 📅 4. Date & Time Types
+
+Very important for real apps.
+
+| Type        | Stores                  |
+| ----------- | ----------------------- |
+| DATE        | Just date               |
+| TIME        | Just time               |
+| TIMESTAMP   | Date + time             |
+| TIMESTAMPTZ | Timestamp with timezone |
+
+### Example
+```sql
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+```
+
+👉 Most apps use:
+```
+TIMESTAMP
+or
+TIMESTAMPTZ (better for global apps)
+```
+
+
+---------------------------------------------------------------
+# 🆔 5. UUID (Universally Unique ID)
+
+Used for unique IDs across systems.
+```sql
+    id UUID DEFAULT gen_random_uuid()
+```
+
+Example:
+```
+550e8400-e29b-41d4-a716-446655440000
+```
+
+Used in:
+    * Supabase
+    * Distributed systems
+    * Public APIs
+
+
+---------------------------------------------------------------
+# 🧾 6. JSON Types (Modern Apps)
+
+Postgres has powerful JSON support.
+| Type  | Notes                           |
+| ----- | ------------------------------- |
+| JSON  | Stores JSON text                |
+| JSONB | Binary JSON (faster, indexable) |
+
+### Example
+```sql
+    metadata JSONB
+```
+
+Stored data:
+```json
+{"theme": "dark", "login_count": 5}
+```
+👉 Prefer JSONB.
+
+
+
+---------------------------------------------------------------
+# 📚 7. Arrays
+
+Store lists in one column.
+```sql
+    tags TEXT[]
+    scores INTEGER[]
+```
+
+Example value:
+```
+{"postgres", "backend", "sql"}
+```
+Note: used sometimes, but relational tables are usually better.
+
+
+---------------------------------------------------------------
+# 🧊 8. Binary Data
+
+For files and raw bytes.
+| Type  | Use            |
+| ----- | -------------- |
+| BYTEA | Binary storage |
+
+Example:
+```sql
+    file_data BYTEA
+```
+
+But most apps store files in:
+    * S3
+    * Cloud storage
+Not DB.
+
+
+
+---------------------------------------------------------------
+# 🎯 9. Serial / Identity (Auto IDs)
+
+Used for auto-increment IDs.
+
+## Modern Postgres (Recommended)
+```sql
+    id INT GENERATED ALWAYS AS IDENTITY
+```
+
+Old style (still common):
+```sql
+    SERIAL
+    BIGSERIAL
+```
+
+
+---------------------------------------------------------------
+# 🧠 10. Special Types (Advanced but useful)
+
+## ENUM (Controlled values)
+```sql
+    CREATE TYPE mood AS ENUM ('happy', 'sad');
+
+    mood_column mood
+```
+
+Good for fixed states.
+---
+
+## INET (IP addresses)
+```sql
+    ip_address INET
+```
+Great for logs, networking apps.
+---
+
+## CIDR / MACADDR
+Network-specific data types.
+---
+
+## TSVECTOR (Full-text search)
+Used for search engines.
+---
+
+# 🧠 Most Common Types in Real Apps
+If you’re building:
+    * Blogs
+    * SaaS apps
+    * Dashboards
+
+You’ll mostly use:
+```sql
+    INTEGER
+    TEXT
+    BOOLEAN
+    TIMESTAMP
+    UUID (sometimes)
+    JSONB (modern apps)
+```
+
+That’s like 90% of use cases.
+---
+
+# 🧪 Example Blog Table (Clean Schema)
+```sql
+CREATE TABLE posts (
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    title TEXT NOT NULL,
+    body TEXT NOT NULL,
+    published BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+Simple and production-ready.
+---
+
+# 🧠 How to Choose the Right Type
+## Ask yourself:
+
+### 1️⃣ Is it text?
+    → TEXT
+---
+
+### 2️⃣ Is it a number?
+    → INTEGER or NUMERIC (money)
+---
+
+### 3️⃣ Is it true/false?
+    → BOOLEAN
+---
+
+### 4️⃣ Is it time?
+    → TIMESTAMP
+---
+
+### 5️⃣ Flexible data?
+    → JSONB
+---
+
+### 6️⃣ Global unique IDs?
+    → UUID
+---
+
+# ⚠️ Common Beginner Mistakes
+    ❌ Using VARCHAR everywhere
+    ❌ Using FLOAT for money
+    ❌ Storing dates as TEXT
+    ❌ Overusing arrays
+    ❌ Avoiding JSONB entirely
+---
+
+# 🧠 Pro Tip
+Choosing the right data type:
+    ✔ Improves performance
+    ✔ Prevents bugs
+    ✔ Makes queries easier
+    ✔ Improves validation
+---
+
+# 🧠 Quick Cheat Sheet
+| Use Case     | Type           |
+| ------------ | -------------- |
+| Names        | TEXT           |
+| Emails       | TEXT           |
+| Age          | INTEGER        |
+| Price        | NUMERIC        |
+| Created date | TIMESTAMP      |
+| Flags        | BOOLEAN        |
+| Metadata     | JSONB          |
+| IDs          | INTEGER / UUID |
